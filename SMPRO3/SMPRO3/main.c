@@ -17,14 +17,19 @@
 #include <avr/interrupt.h>
 #include "usart.h"
 
-volatile float duration;
+volatile int duration;
+volatile char updated=0;
 float distance;
 
-void reset_timer();
-int get_timer();
+void reset_timer(void);
+int get_timer_value(void);
+int get_and_stop_timer(void);
 
+// Timer values
 char start=(1<<CS12);
 char stop=0;
+
+float values[3]={0,0,0};
 
 int main(void)
 {
@@ -39,45 +44,59 @@ int main(void)
 	EIMSK|=(1<<INT0);
 	sei();
 	
-	//timer
-	TCCR1B=start;
 	
 	//usart
 	uart_init();
 	io_redirect();
 	
+	char counter=0;
     while (1) 
     {
-		_delay_ms(1000);
-		
-		distance=duration*0.034/2.0;
-		printf("%f\n",distance);
+		//generate Trig signal
 		PORTC=(1<<PC4);
 		_delay_us(10);
 		PORTC=0;
+		
+		//read value
+		if(updated==1){
+			printf("%d\t",duration);
+			// result = timervalue* 256/16000000 * 343m/s * 100cm *1/2
+			float result=duration*0.2744;
+			printf("%f\n",result);
+			updated=0;
+		}
+		_delay_ms(500);
     }
 }
 
 ISR(INT0_vect){
-	if(PIND&(1<<PD0)>0){ //rising edge
+	if((PIND&(1<<PD0))>0){ //rising edge
 		reset_timer();
 	}
 	if((PIND&(1<<PD0))==0){ //falling edge
-		duration=256.0/16*get_timer();
+		duration=get_and_stop_timer();
+		updated=1;
 	}
 }
 
-void reset_timer(){
-	TCNT1H=0;
-	TCNT1L=0;
+void reset_timer(void){
+	TCNT1H=0x00;
+	TCNT1L=0x00;
 	TCCR1B=start;
 	
 }
 
-int get_timer(){
-	int output=0;
-	output|=(uint8_t)TCNT1H<<8;
-	output|=(uint8_t)TCNT1L;
+
+int get_and_stop_timer(void){
 	TCCR1B=stop;
+	int output=0;
+	output|=((uint8_t)TCNT1H)<<8;
+	output|=(uint8_t)TCNT1L;
+	return output;
+}
+int get_timer_value(void){
+	int output=0;
+	output|=((uint8_t)TCNT1H)<<8;
+	output|=(uint8_t)TCNT1L;
 	return output;
 }
