@@ -2,7 +2,7 @@
 							 +----[PWR]-------------------| USB |--+
 							 |                            +-----+  |
 							 |           GND/RST2  [ ] [ ]         |
-							 |         MOSI2/SCK2  [ ] [ ]  SCL[ ] |   D0
+							 |         MOSI2/SCK2  [ ] [ ]  SCLy[ ] |   D0
 							 |            5V/MISO2 [ ] [ ]  SDA[ ] |   D1
 							 |                             AREF[ ] |
 							 |                              GND[ ] |
@@ -15,11 +15,11 @@
 							 | [ ]GND      +----------+            |
 							 | [ ]Vin                         7[ ]~|   H4
 							 |                                6[ ]~|   H3
-			Trig0		F0	         | [ ]A0                          5[ ]~|   E3
-			Trig1		F1	         | [ ]A1                          4[ ]~|   G5
-			Trig2		F2	         | [ ]A2                     INT5/3[ ]~|   E5
-			Trig3		F3	         | [ ]A3                     INT4/2[ ]~|   E4
-			Trig4		F4	         | [ ]A4                       TX>1[ ]~|   E1
+			Trig0		F0	 | [ ]A0                          5[ ]~|   E3
+			Trig1		F1	 | [ ]A1                          4[ ]~|   G5
+			Trig2		F2	 | [ ]A2                     INT5/3[ ]~|   E5		Optocoupler2
+			Trig3		F3	 | [ ]A3                     INT4/2[ ]~|   E4		Optocoupler1
+			Trig4		F4	 | [ ]A4                       TX>1[ ]~|   E1
 						F5	 | [ ]A5                       RX<0[ ]~|   E0
 						F6	 | [ ]A6                               |   
 						F7	 | [ ]A7                     TX3/14[ ] |   J1
@@ -27,9 +27,9 @@
 						K0	 | [ ]A8                     TX2/16[ ] |   H1         
 						K1	 | [ ]A9                     RX2/17[ ] |   H0
 						K2	 | [ ]A10               TX1/INT3/18[ ] |   D3         
-						K3	 | [ ]A11               RX1/INT2/19[ ] |   D2
+						K3	 | [ ]A11               RX1/INT2/19[ ] |   D2		Echo all
 						K4	 | [ ]A12           I2C-SDA/INT1/20[ ] |   D1         
-						K5	 | [ ]A13           I2C-SCL/INT0/21[ ] |   D0		Echo all
+						K5	 | [ ]A13           I2C-SCL/INT0/21[ ] |   D0		
 						K6	 | [ ]A14                              |            
 						K7	 | [ ]A15                              |   Ports:
 							 |                RST SCK MISO         |    22=A0  23=A1   

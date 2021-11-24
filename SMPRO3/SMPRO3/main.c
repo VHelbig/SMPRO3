@@ -7,14 +7,16 @@
 
 
 #define F_CPU 16000000
-#define ULTRA_NUMBER 2
-//INCLUDES
+#define ULTRA_NUMBER 4
+
 #include <avr/io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include "i2cmaster.h"
 #include "usart.h"
+#include "PCA9685.h"
 
 //STRUCTURES
 typedef struct{
@@ -27,6 +29,9 @@ typedef struct{
 //interrupt variables:
 volatile timer_value_t timer_values[5];
 volatile int ultra_index=0;
+
+volatile int optocounter1=0;
+volatile int optocounter2=0;
 
 // Timer values for TIMER 1
 char start=(1<<CS12);
@@ -71,9 +76,17 @@ int main(void)
 	TIMSK3=(1<<OCIE3B)|(1<<TOIE3);
 	
 	
-	//Interrupts
-	EICRA|=(1<<ISC00); // Enable external interrupt 0 on any edge
-	EIMSK|=(1<<INT0);
+	//External interrupts
+	//echo all
+	EICRA|=(1<<ISC20); // Enable external interrupt 0 on any edge
+	EIMSK|=(1<<INT2);
+	//optocaupler	
+	EICRB|=(1<<ISC41)|(1<<ISC40);//rising edge on int4
+	EIMSK|=(1<<INT4);
+	EICRB|=(1<<ISC51)|(1<<ISC50);//rising edge on int5
+	EIMSK|=(1<<INT5);
+	
+	
 	sei();  // enable global interrupts
 	
 	
@@ -81,20 +94,28 @@ int main(void)
 	uart_init();
 	io_redirect();
 	
+	//i2c 
+	i2c_init();
+	motor_init_pwm(PWM_FREQUENCY_50);
+	motor_set_state(M1,CW);
     while (1) 
     {
 		//generate Trig signal
 		//trigger_ultra(ultra_index);
-		print_all_timer_values();
+		//print_all_timer_values();
+		
+		//printf("%d\n",optocounter);
 		_delay_ms(500);
+		
+		
     }
 }
 
-ISR(INT0_vect){
-	if((PIND&(1<<PD0))>0){ //rising edge
+ISR(INT2_vect){
+	if((PIND&(1<<PD2))>0){ //rising edge
 		reset_timer();
 	}
-	if((PIND&(1<<PD0))==0){ //falling edge
+	if((PIND&(1<<PD2))==0){ //falling edge
 		timer_values[ultra_index].timer_value=get_and_stop_timer();
 		timer_values[ultra_index].updated=1;
 		ultra_index+=1;
@@ -154,14 +175,30 @@ ISR(TIMER3_COMPB_vect){
 	//Trigger pin
 	index_buffer=ultra_index;
 	PORTF=(1<<index_buffer);
+	ultra_index++;
+	if(ultra_index>=ULTRA_NUMBER){
+		ultra_index=0;
+	}
 }
 
 ISR(TIMER3_OVF_vect){
 	//release pin
 	PORTF=0x00;
+	
 }
+
 
 int read_timer_value(int index){
 	timer_values[index].updated=0;
 	return timer_values[index].timer_value;
+}
+
+//optocoupler:
+
+ISR(INT4_vect){
+	optocounter1++;
+}
+
+ISR(INT5_vect){
+	optocounter2++;
 }
