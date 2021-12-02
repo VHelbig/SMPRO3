@@ -4,7 +4,7 @@
 							 |           GND/RST2  [ ] [ ]         |
 							 |         MOSI2/SCK2  [ ] [ ]  SCLy[ ] |   D0
 							 |            5V/MISO2 [ ] [ ]  SDA[ ] |   D1
-							 |                             AREF[ ] |
+							 |                             AREF[ ] |			5V voltage Ref
 							 |                              GND[ ] |
 							 | [ ]N/C                        13[ ]~|   B7		
 							 | [ ]IOREF                      12[ ]~|   B6		
@@ -12,26 +12,26 @@
 							 | [ ]3V3      +----------+      10[ ]~|   B4		
 							 | [ ]5v       | ARDUINO  |       9[ ]~|   H6		
 							 | [ ]GND      |   MEGA   |       8[ ]~|   H5
-							 | [ ]GND      +----------+            |
-							 | [ ]Vin                         7[ ]~|   H4
+			GND				 | [ ]GND      +----------+            |
+			5V power		 | [ ]Vin                         7[ ]~|   H4
 							 |                                6[ ]~|   H3
 			Trig0		F0	 | [ ]A0                          5[ ]~|   E3
 			Trig1		F1	 | [ ]A1                          4[ ]~|   G5
 			Trig2		F2	 | [ ]A2                     INT5/3[ ]~|   E5		Optocoupler2
 			Trig3		F3	 | [ ]A3                     INT4/2[ ]~|   E4		Optocoupler1
-			Trig4		F4	 | [ ]A4                       TX>1[ ]~|   E1
-						F5	 | [ ]A5                       RX<0[ ]~|   E0
+			Trig4		F4	 | [ ]A4                       TX>1[ ]~|   E1		RXD on Raspberry
+						F5	 | [ ]A5                       RX<0[ ]~|   E0		TXD on Raspberry
 						F6	 | [ ]A6                               |   
 						F7	 | [ ]A7                     TX3/14[ ] |   J1
 							 |                           RX3/15[ ] |   J0
-						K0	 | [ ]A8                     TX2/16[ ] |   H1         
-						K1	 | [ ]A9                     RX2/17[ ] |   H0
-						K2	 | [ ]A10               TX1/INT3/18[ ] |   D3         
-						K3	 | [ ]A11               RX1/INT2/19[ ] |   D2		Echo all
-						K4	 | [ ]A12           I2C-SDA/INT1/20[ ] |   D1         
-						K5	 | [ ]A13           I2C-SCL/INT0/21[ ] |   D0		
-						K6	 | [ ]A14                              |            
-						K7	 | [ ]A15                              |   Ports:
+			LED1		K0	 | [ ]A8                     TX2/16[ ] |   H1         
+			LED2		K1	 | [ ]A9                     RX2/17[ ] |   H0
+			LED3		K2	 | [ ]A10               TX1/INT3/18[ ] |   D3         
+			LED4		K3	 | [ ]A11               RX1/INT2/19[ ] |   D2		Echo all
+						K4	 | [ ]A12           I2C-SDA/INT1/20[ ] |   D1       I2C SDA hub
+			Vbat		K5	 | [ ]A13           I2C-SCL/INT0/21[ ] |   D0		I2C SCL Hub
+			V2			K6	 | [ ]A14                              |            
+			V1			K7	 | [ ]A15                              |   Ports:
 							 |                RST SCK MISO         |    22=A0  23=A1   
 							 |         ICSP   [ ] [ ] [ ]          |    24=A2  25=A3   
 							 |                [ ] [ ] [ ]          |    26=A4  27=A5   
