@@ -8,6 +8,8 @@
 
 #define F_CPU 16000000
 #define ULTRA_NUMBER 4	//number if ultrasonic sensors
+#define OLD_VALUE_THRESHOLD 500;
+
 
 #include <avr/io.h>
 #include <stdio.h>
@@ -17,19 +19,22 @@
 #include "i2cmaster.h"	//i2c
 #include "usart.h"		//usart library from alin also works on arduino mega
 #include "PCA9685.h"	//motorcontrol board
+#include "time.h"
 
 //STRUCTURES
 typedef struct{
 	int timer_value;
-	char updated;		//replace this with timestamp later
+	float time_stamp;	//TODO change this to a smaller type later
 }timer_value_t;			//struct for keeping track of all timer values and if they are up to date
 
 //GLOBAL VARIABLES
 
 //ultrasonic data array
-volatile timer_value_t timer_values[5];
+volatile timer_value_t timer_values[ULTRA_NUMBER];
 //index to currently trigger ultra sonic s.
 volatile int ultra_index=0;
+//next ultrra sonic sensor which relly needs to be read next
+volatile char request_ultra_index=-1;
 
 // optocoupler counters
 volatile int optocounter1=0;
@@ -54,7 +59,7 @@ int main(void)
 	//Initializing Timer Value array
 	for(int i=0;i<ULTRA_NUMBER;i++){
 		timer_values[i].timer_value=0;
-		timer_values[i].updated=0;
+		timer_values[i].time_stamp=0;
 	}
 	
 	//Triger ultra sonic pins
@@ -121,7 +126,7 @@ ISR(INT2_vect){
 	}
 	if((PIND&(1<<PD2))==0){ //falling edge
 		timer_values[ultra_index].timer_value=get_and_stop_timer();
-		timer_values[ultra_index].updated=1;
+		timer_values[ultra_index].time_stamp=get_time_ms();			//TODO maybe this is too slow
 		ultra_index+=1;
 		if(ultra_index>=ULTRA_NUMBER){
 			ultra_index=0;
@@ -160,13 +165,7 @@ void trigger_ultra(int index){
 void print_all_timer_values(void){
 	//Ultrasonic 0:		1424	updated
 	for(int i=0;i<ULTRA_NUMBER;i++){
-		printf("Ultrasonic %d: \t%d \t",i,timer_values[i].timer_value);
-		if(timer_values[i].updated>0){
-			printf("updated\n");
-			timer_values[i].updated=0;
-		}else{
-			printf("not updated\n");
-		}
+		printf("Ultrasonic %d: \t%d \tTime Stamp:%f",i,timer_values[i].timer_value,timer_values[i].time_stamp);		
 	}
 	printf("Index: %d\n",ultra_index);
 	
@@ -179,10 +178,14 @@ ISR(TIMER3_COMPB_vect){
 	//Trigger pin
 	index_buffer=ultra_index;
 	PORTF=(1<<index_buffer);
-	
-	ultra_index++;
-	if(ultra_index>=ULTRA_NUMBER){
-		ultra_index=0;
+	if(request_ultra_index<0){
+		ultra_index++;
+		if(ultra_index>=ULTRA_NUMBER){
+			ultra_index=0;
+		}
+	}else{
+		ultra_index=request_ultra_index;
+		request_ultra_index=-1;
 	}
 }
 
@@ -194,8 +197,15 @@ ISR(TIMER3_OVF_vect){
 
 
 int read_timer_value(int index){
-	timer_values[index].updated=0;
-	return timer_values[index].timer_value;
+	float diff_time=get_time_ms()-timer_values[index].time_stamp;
+	if(diff_time>OLD_VALUE_THRESHOLD){
+		int tmp=timer_values[index].timer_value;
+		request_ultra_index=index;
+		while(timer_values[index].timer_value==tmp){} //wait until value changes
+		return timer_values[index].timer_value;
+	}else{
+		return timer_values[index].timer_value;
+	}
 }
 
 //optocoupler:
