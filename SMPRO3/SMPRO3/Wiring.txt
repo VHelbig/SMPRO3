@@ -1,8 +1,8 @@
-												 +-----+
+														  +-----+
 							 +----[PWR]-------------------| USB |--+
 							 |                            +-----+  |
 							 |           GND/RST2  [ ] [ ]         |
-							 |         MOSI2/SCK2  [ ] [ ]  SCLy[ ] |   D0
+							 |         MOSI2/SCK2  [ ] [ ]  SCL[ ] |   D0
 							 |            5V/MISO2 [ ] [ ]  SDA[ ] |   D1
 							 |                             AREF[ ] |			5V voltage Ref
 							 |                              GND[ ] |
@@ -24,11 +24,11 @@
 						F6	 | [ ]A6                               |   
 						F7	 | [ ]A7                     TX3/14[ ] |   J1
 							 |                           RX3/15[ ] |   J0
-						K0	 | [ ]A8                     TX2/16[ ] |   H1         
-						K1	 | [ ]A9                     RX2/17[ ] |   H0
-						K2	 | [ ]A10               TX1/INT3/18[ ] |   D3         
-						K3	 | [ ]A11               RX1/INT2/19[ ] |   D2		Echo all
-						K4	 | [ ]A12           I2C-SDA/INT1/20[ ] |   D1       I2C SDA hub
+			Echo0		K0	 | [ ]A8                     TX2/16[ ] |   H1         
+			Echo1		K1	 | [ ]A9                     RX2/17[ ] |   H0
+			Echo2		K2	 | [ ]A10               TX1/INT3/18[ ] |   D3         
+			Echo3		K3	 | [ ]A11               RX1/INT2/19[ ] |   D2		Echo all
+			Echo4		K4	 | [ ]A12           I2C-SDA/INT1/20[ ] |   D1       I2C SDA hub
 			Vbat		K5	 | [ ]A13           I2C-SCL/INT0/21[ ] |   D0		I2C SCL Hub
 			V2			K6	 | [ ]A14                              |            
 			V1			K7	 | [ ]A15                              |   Ports:
