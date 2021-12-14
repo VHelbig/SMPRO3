@@ -148,6 +148,12 @@
     <Compile Include="twimaster.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="UltraSonic.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="UltraSonic.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="usart.c">
       <SubType>compile</SubType>
     </Compile>

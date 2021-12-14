@@ -27,22 +27,22 @@ ISR(TIMER4_OVF_vect){
 
 
 float get_time_ms(){
-	return time_ms+((uint16_t)TCNT4)*(64E-6);
+	return time_ms+(TCNT4)*(0.064);
 }
 
 float get_time_s(){
-	time_s=time_ms/1000+((uint16_t)TCNT4)*(64E-9);
+	time_s=time_ms/1000+(TCNT4)*(64E-6);
 	return time_s;
 }
 
 float get_time_min(){
-	time_s=time_ms/1000+((uint16_t)TCNT4)*(64E-9);
+	time_s=time_ms/1000+(TCNT4)*(64E-6);
 	time_min=time_s/60.0;
 	return time_min;
 	
 }
 float get_time_h(){
-	time_s=time_ms/1000+((uint16_t)TCNT4)*(64E-9);
+	time_s=time_ms/1000+(TCNT4)*(64E-6);
 	time_min=time_s/60.0;
 	time_h=time_min/60.0;
 	return time_h;
