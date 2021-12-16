@@ -30,6 +30,7 @@ volatile char request_ultra_index=-1;
 
 //ultrasonic data array
 volatile timer_value_t timer_values[ULTRA_NUMBER];
+volatile char ultra_trigger_mask=0xFF;
 volatile int ultra_error=0;
 volatile int ultra_timer_error=0;
 
@@ -168,19 +169,23 @@ ISR(TIMER3_OVF_vect){
 //FUNCTIONS
 
 void reset_timer(void){
+	cli();
 	TCNT1H=0x00;
 	TCNT1L=0x00;
 	TCCR1B=timer1_start;
-	
+	sei();
 }
 
 
 int get_and_stop_timer(void){
+	cli();
 	TCCR1B=timer1_stop;
 	/*int output=0;
 	output=(TCNT1H<<8)|TCNT1L;*/
 	//return output;
-	return (uint16_t)TCNT1;
+	int output=(uint16_t)TCNT1;
+	sei();
+	return output;
 }
 
 int get_timer_value(void){
@@ -196,7 +201,8 @@ int read_timer_value(int index){
 	if(diff_time>OLD_VALUE_THRESHOLD){
 		int tmp=timer_values[index].timer_value;
 		request_ultra_index=index;
-		while(timer_values[index].timer_value==tmp){} //wait until value changes
+		while(timer_values[index].timer_value==tmp){
+			} //wait until value changes
 		return timer_values[index].timer_value;
 	}else{
 		return timer_values[index].timer_value;
