@@ -60,6 +60,14 @@ volatile int optocounterR=0;
 int motor_left=0;
 int motor_right=0;
 
+//current sensor
+volatile float lastmeasure=0;
+volatile float voltage=0;
+volatile float current=0;
+//volatile float total_energy=0;
+volatile float amphours=0;
+//volatile char adc_index=5;
+
 //PROTOTYPES
 void turn_robot(float degrees);
 void AlignRobotToPoint(vector_t  *point);
@@ -73,6 +81,8 @@ vector_t SetInterAim(vector_t aim, float seed);
 void led_setall(char l1,char l2,char l3,char l4,char rl5);
 char CloseTo(vector_t aim);
 char isFrontClear(void);
+
+uint16_t adc_read(uint8_t adc_channel);
 
 
 
@@ -95,11 +105,29 @@ int main(void)
 	EICRB|=(1<<ISC51)|(1<<ISC50);//rising edge on int5
 	EIMSK|=(1<<INT5);
 	
+	//Current sensor
+	DDRF = 0b00011111;// inputs of the ADC PF7..5
+	PORTF = 0x00; //NO PULL-UPS
+	DDRC = 0xFF;//LEDs Outputs
+	PORTC = (1<<PC0)|(1<<PC1)|(1<<PC2)|(1<<PC3)|(1<<PC4);//All LEDs ON
+	
+	uint16_t adc_result;
+	
+	//select Vref = Aref and AVcc turn off
+	ADMUX = (1<<REFS0)|(1<<REFS1);
+	ADCSRB = (0<<MUX5);
+	//set prescaler to 128 and turn on the ADC module
+	ADCSRA = (1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0)|(1<<ADEN)|(1<<ADIE)|(1<<ADSC);
+	//leave ADCSRB as it is
+	DIDR0|=(1<<ADC5D)|(1<<ADC6D); //disable digital input on A5 and A6
+	
+	
 	sei();  // enable global interrupts
 	
 	//usart
 	uart_init();
 	io_redirect();
+	printf("test");
 	
 	//i2c 
 	i2c_init();
@@ -140,7 +168,8 @@ int main(void)
 		//_delay_ms(100);
 		//300 gut 
 		//printf("v:%d\n",read_timer_value(0));
-		if(followCornerMode){
+		
+		/*if(followCornerMode){
 			follow_corner();
 		}else{
 			if(CloseTo(aim)==0){
@@ -170,7 +199,23 @@ int main(void)
 					}
 				}
 			}
-		}
+		}*/
+		
+		//VOLTAGE SENSOR
+		printf("Voltage VS: %0.1f mV \n", voltage);//VS=voltage sensor
+		
+		//CURRENT SENSOR
+		printf("Current: %0.2f A \n", current);
+		printf("Total Energy: %0.4f AH\n",amphours);
+		
+		/*if (current_total == 2.4 ){PORTC = 0b11111110;}//PC0
+		if (current_total == 4.8 ){PORTC = 0b11111100;}//PC1
+		if (current_total == 7.2 ){PORTC = 0b11111000;}//PC2
+		if (current_total == 9.6 ){PORTC = 0b11110000;}//PC3
+		if (current_total == 12.0 ){PORTC = 0b11100000;}//PC4*/
+
+		_delay_ms (1000);
+		
 		//_delay_ms(2000);
 		//turn_robot(90);
 		
@@ -447,6 +492,49 @@ char CloseTo(vector_t aim){
 
 char isFrontClear(void){
 	return (read_timer_value(3)>90) && (read_timer_value(2)>20) && (read_timer_value(0)>20);
+}
+
+uint16_t adc_read(uint8_t adc_channel)
+{
+	ADMUX &= 0xF0; //clear any previously used channel
+	ADMUX |= adc_channel; //set desired channel
+	//start conversion
+	ADCSRA |= (1<<ADSC);
+	//now wait for the conversion to be complete
+	while ( (ADCSRA & (1<<ADSC)) );
+	/*at this point we have the result of the conversion and
+    we return it to the function as a 16 bit unsigned int*/
+	return ADC;
+}	
+
+ISR(ADC_vect){
+	/*if(adc_index==5){
+		//VOLTAGE SENSOR
+		volatile uint16_t adc_result = ADC;
+		voltage = (5000.0/1024) * adc_result;
+		adc_index=6;
+	}else{*/
+		//CURRENT SENSOR
+		volatile uint16_t adc_result = ADC;
+		volatile float difftime=get_time_ms()-lastmeasure;
+		printf("dt:%f\n",difftime);
+		lastmeasure=get_time_ms();
+		volatile float voltage2 = (5000.0/1024) * adc_result;
+		current = ((voltage2/1000) + 0.073)/0.452;
+		
+		
+		//total_energy+=current*voltage/1000.0f*difftime/1000.0f;
+		amphours+=current*difftime/1000.0f/60.0f/60.0f;
+		//adc_index=5;
+		
+	//}
+	ADMUX &= 0xF0; //clear any previously used channel
+//	ADMUX |= adc_index; //set desired channel
+	ADMUX |= 6; //set desired channel
+	//start conversion
+
+	ADCSRA |= (1<<ADSC);
+	
 }
 
 //optocoupler:
