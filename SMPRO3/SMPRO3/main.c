@@ -9,7 +9,7 @@
 #define F_CPU 16000000
 //ULtrasonic 
 #define ULTRA_NUMBER 5	//number of ultrasonic sensors
-#define OLD_VALUE_THRESHOLD 500
+#define OLD_VALUE_THRESHOLD 200
 //Main
 #define IR_THRESHOLD (50)
 
@@ -69,10 +69,10 @@ volatile float amphours=0;
 //volatile char adc_index=5;
 
 //PROTOTYPES
-void turn_robot(float degrees);
-void AlignRobotToPoint(vector_t  *point);
-void MoveABit(vector_t *point);
-void MoveToPoint(vector_t *point);
+void turn_robot(float degrees);					//turns robot a certain angle and updates nose vector
+void AlignRobotToPoint(vector_t  *point);		//Alligns robot to point in coordinate system
+void MoveABit(vector_t *point);					//Moves robot ca. 7 cm straightly forward 
+void MoveToPoint(vector_t *point);				//Allginrobot and 
 void follow_corner(void);
 
 void motpwm_setLeft(int speed);
@@ -114,7 +114,7 @@ int main(void)
 	uint16_t adc_result;
 	
 	//select Vref = Aref and AVcc turn off
-	ADMUX = (1<<REFS0)|(1<<REFS1);
+	ADMUX = (0<<REFS0)|(0<<REFS1);
 	ADCSRB = (0<<MUX5);
 	//set prescaler to 128 and turn on the ADC module
 	ADCSRA = (1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0)|(1<<ADEN)|(1<<ADIE)|(1<<ADSC);
@@ -132,12 +132,11 @@ int main(void)
 	//i2c 
 	i2c_init();
 	motor_init_pwm(PWM_FREQUENCY_200);
-	
 	//Main algorithm
 	robot.x=0;
 	robot.y=0;
-	aim.x=200;
-	aim.y=100;
+	aim.x=-100;
+	aim.y=200;
 	nose.x=0;
 	nose.y=1;
 	nose_deg=0;
@@ -169,7 +168,7 @@ int main(void)
 		//300 gut 
 		//printf("v:%d\n",read_timer_value(0));
 		
-		/*if(followCornerMode){
+		if(followCornerMode){
 			follow_corner();
 		}else{
 			if(CloseTo(aim)==0){
@@ -199,22 +198,32 @@ int main(void)
 					}
 				}
 			}
-		}*/
+		}
 		
-		//VOLTAGE SENSOR
+		/*//VOLTAGE SENSOR
 		printf("Voltage VS: %0.1f mV \n", voltage);//VS=voltage sensor
 		
 		//CURRENT SENSOR
 		printf("Current: %0.2f A \n", current);
-		printf("Total Energy: %0.4f AH\n",amphours);
+		printf("Total Energy: %0.4f AH\n",amphours);*/
 		
-		/*if (current_total == 2.4 ){PORTC = 0b11111110;}//PC0
-		if (current_total == 4.8 ){PORTC = 0b11111100;}//PC1
-		if (current_total == 7.2 ){PORTC = 0b11111000;}//PC2
-		if (current_total == 9.6 ){PORTC = 0b11110000;}//PC3
-		if (current_total == 12.0 ){PORTC = 0b11100000;}//PC4*/
+		if (amphours > 1.8 ){
+			PORTC = 0b11111110;//PC0
+		}
+		if (amphours > 3.6 ){
+			PORTC = 0b11111100;//PC1
+		}
+		if (amphours > 5.4 ){
+			PORTC = 0b11111000;//PC2
+		}
+		if (amphours > 7.2 ){
+			PORTC = 0b11110000;//PC3
+		}
+		if (amphours > 9 ){
+			PORTC = 0b11100000;//PC4
+		}
 
-		_delay_ms (1000);
+		//_delay_ms (1000);
 		
 		//_delay_ms(2000);
 		//turn_robot(90);
@@ -357,6 +366,7 @@ void MoveToPoint(vector_t *point){
 void follow_corner(void) {
 	//get values
 	int fll=read_timer_value(4);
+	int fl=read_timer_value(0);
 	//printf("v:%d\n",fl);
 	//move to the right // wall to the left
 	
@@ -381,6 +391,8 @@ void follow_corner(void) {
 			MoveToPoint(&tmp);
 			
 		}*/
+	}else if(fl<30){
+		turn_robot(45);		
 	}else if(fll>100){ //corner left bend
 		led_setall(1,1,1,1,0);
 		//Move a bit forward, then path should be free
@@ -491,7 +503,7 @@ char CloseTo(vector_t aim){
 }
 
 char isFrontClear(void){
-	return (read_timer_value(3)>90) && (read_timer_value(2)>20) && (read_timer_value(0)>20);
+	return (read_timer_value(3)>80) && (read_timer_value(2)>20) && (read_timer_value(0)>20);
 }
 
 uint16_t adc_read(uint8_t adc_channel)
@@ -517,7 +529,6 @@ ISR(ADC_vect){
 		//CURRENT SENSOR
 		volatile uint16_t adc_result = ADC;
 		volatile float difftime=get_time_ms()-lastmeasure;
-		printf("dt:%f\n",difftime);
 		lastmeasure=get_time_ms();
 		volatile float voltage2 = (5000.0/1024) * adc_result;
 		current = ((voltage2/1000) + 0.073)/0.452;
